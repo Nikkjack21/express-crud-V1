@@ -1,5 +1,6 @@
 import { getCollection } from "../db-handlers/db-handler.connection.js";
-import { passwordHash } from "../common/password.js";
+import { passwordHash, checkPassword } from "../common/password.js";
+import { hash } from "bcrypt";
 
 const adminUserCreator = async (req, res) => {
   try {
@@ -21,7 +22,6 @@ const adminUserCreator = async (req, res) => {
       });
     }
     const hash = await passwordHash(password);
-    console.log('HASHED-PASS', hash)
     const newUser = await getCollection("users").insertOne({
       first_name: fname,
       last_name: lname,
@@ -40,7 +40,7 @@ const adminUserCreator = async (req, res) => {
       data: userData,
     });
   } catch (err) {
-    console.log("ADMIN CREATE USER, ", err)
+    console.log("ADMIN CREATE USER, ", err);
     res.json({
       status: 400,
       message: "Failed to create user.",
@@ -49,6 +49,48 @@ const adminUserCreator = async (req, res) => {
   }
 };
 
+const adminUserLogin = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { email, password } = req.body;
 
+    let user = await getCollection("users").findOne({
+      email: email,
+    });
+    if (!user) {
+      return res.json({
+        status: 400,
+        message: "Wrong credentials or User not found",
+      });
+    }
+    if (!user.is_admin) {
+      return res.json({
+        status: 401,
+        message: "You are not authorized",
+      });
+    }
 
-export {adminUserCreator}
+    const isMatched = await checkPassword({ password, hash: user.password });
+    if (!isMatched) {
+      return res.json({
+        status: 400,
+        message: "Wrong credentials",
+      });
+    }
+
+    // return user object response without showing password
+    const { ...userData } = user
+    delete userData.password
+    return res.json({
+      status: 200,
+      message: "Login success",
+      data: userData,
+    });
+  } catch (err) {
+    console.log("Try-catch-error in user-login", err);
+  }
+};
+
+const allUsers = async (res, req) => {};
+
+export { adminUserCreator, adminUserLogin, allUsers };

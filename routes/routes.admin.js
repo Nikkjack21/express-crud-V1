@@ -6,6 +6,7 @@ import * as adminCtrl from "../controllers/controller.admin.js";
 // Router for admin
 const router = express.Router()
 
+router.post('/login-admin', adminCtrl.adminUserLogin)
 router.post('/create-admin-user', adminCtrl.adminUserCreator)
 
 
