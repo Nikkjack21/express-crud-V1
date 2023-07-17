@@ -1,6 +1,5 @@
 import { getCollection } from "../db-handlers/db-handler.connection.js";
 import { passwordHash, checkPassword } from "../common/password.js";
-import { hash } from "bcrypt";
 
 const adminUserCreator = async (req, res) => {
   try {
@@ -34,6 +33,7 @@ const adminUserCreator = async (req, res) => {
     const userData = await getCollection("users").findOne({
       _id: newUser.insertedId,
     });
+    delete userData.password; // Omit password in response;
     return res.json({
       status: 201,
       message: "User created.",
@@ -51,7 +51,6 @@ const adminUserCreator = async (req, res) => {
 
 const adminUserLogin = async (req, res) => {
   try {
-    console.log(req.body);
     const { email, password } = req.body;
 
     let user = await getCollection("users").findOne({
@@ -87,7 +86,7 @@ const adminUserLogin = async (req, res) => {
       data: userData,
     });
   } catch (err) {
-    console.log("Try-catch-error in user-login", err);
+    console.log("Try-catch-error in admin-user-login", err);
   }
 };
 
