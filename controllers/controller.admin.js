@@ -63,12 +63,12 @@ const adminUserLogin = async (req, res) => {
         message: "Wrong credentials or User not found",
       });
     }
-    if (!user.is_admin) {
-      return res.json({
-        status: 401,
-        message: "You are not authorized",
-      });
-    }
+    // if (!user.is_admin) {
+    //   return res.json({
+    //     status: 401,
+    //     message: "You are not authorized",
+    //   });
+    // }
 
     const isMatched = await checkPassword({ password, hash: user.password });
     if (!isMatched) {
@@ -78,16 +78,25 @@ const adminUserLogin = async (req, res) => {
       });
     }
 
-    // return user object response without showing password
-    const { ...userData } = user;
-    delete userData.password;
-    // generate token
-    const token =  getJwtToken({user:{userData}});
-    userData.token = token;
+    const getToken = getJwtToken({
+      user: {
+        _id: user._id,
+        email: user.email,
+        active: user.active,
+        is_admin: user.is_admin,
+      },
+    });
+    const resp = await getCollection("users").findOneAndUpdate(
+      { _id: user._id },
+      { $set: { token: getToken } },
+      { returnDocument: "after" }
+    );
+    delete resp.value.password; // omit the password from response
+
     return res.json({
       status: 200,
       message: "Login success",
-      data: userData,
+      data: resp.value,
     });
   } catch (err) {
     console.log("Try-catch-error in admin-user-login", err);
@@ -95,17 +104,16 @@ const adminUserLogin = async (req, res) => {
 };
 
 const allUsers = async (req, res) => {
-  const users = await getCollection("users").find().toArray()
-  const usersData = users.map(user=>{
-    const {password, ...withoutPassword} = user;
-    return withoutPassword;
-  })
+  const users = await getCollection("users").find().toArray();
+  const usersData = users.map((user) => {
+    const { password, token, ...users } = user;
+    return users;
+  });
   return res.json({
     status: 200,
     message: "success",
-    data: usersData
-  })
-
+    data: usersData,
+  });
 };
 
 export { adminUserCreator, adminUserLogin, allUsers };

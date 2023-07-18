@@ -2,7 +2,6 @@ import express from "express";
 import logger from "morgan";
 import routes from "./routes/index.js";
 import { connectDB } from "./db-handlers/db-handler.connection.js";
-import { authMiddleware } from "./middlewares/middleware.auth.js";
 
 const app = express();
 app.use(express.json());
@@ -13,7 +12,6 @@ connectDB();
 
 // logger
 app.use(logger("dev"));
-app.use(authMiddleware)
 // api routes
 routes(app);
 const { PORT } = process.env;
