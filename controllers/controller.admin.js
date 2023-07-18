@@ -1,5 +1,6 @@
 import { getCollection } from "../db-handlers/db-handler.connection.js";
 import { passwordHash, checkPassword } from "../common/password.js";
+import { getJwtToken } from "../middlewares/middleware.auth.js";
 
 const adminUserCreator = async (req, res) => {
   try {
@@ -78,8 +79,11 @@ const adminUserLogin = async (req, res) => {
     }
 
     // return user object response without showing password
-    const { ...userData } = user
-    delete userData.password
+    const { ...userData } = user;
+    delete userData.password;
+    // generate token
+    const token =  getJwtToken({user:{userData}});
+    userData.token = token;
     return res.json({
       status: 200,
       message: "Login success",
@@ -90,6 +94,18 @@ const adminUserLogin = async (req, res) => {
   }
 };
 
-const allUsers = async (res, req) => {};
+const allUsers = async (req, res) => {
+  const users = await getCollection("users").find().toArray()
+  const usersData = users.map(user=>{
+    const {password, ...withoutPassword} = user;
+    return withoutPassword;
+  })
+  return res.json({
+    status: 200,
+    message: "success",
+    data: usersData
+  })
+
+};
 
 export { adminUserCreator, adminUserLogin, allUsers };

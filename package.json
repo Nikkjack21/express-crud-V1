@@ -5,8 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node -r dotenv/config index.js dotenv_config_path=/home/jackson/Learning/JavaScript/NodeJs/Express_workouts/Crud-app-V1/data/crud_v1.env",
+    "dev": "nodemon -r dotenv/config index.js dotenv_config_path=/home/jackson/Learning/JavaScript/NodeJs/Express_workouts/Crud-app-V1/data/crud_v1.env",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

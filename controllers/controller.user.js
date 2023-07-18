@@ -1,8 +1,9 @@
 import { getCollection } from "../db-handlers/db-handler.connection.js";
 import { passwordHash, checkPassword } from "../common/password.js";
+import { authChecker, authMiddleware, getJwtToken } from "../middlewares/middleware.auth.js";
 
 const userCreator = async (req, res) => {
-    try {
+  try {
     const {
       fname,
       lname,
@@ -50,44 +51,50 @@ const userCreator = async (req, res) => {
   }
 };
 
-const userLogin = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      let user = await getCollection("users").findOne({
-        email: email,
-      });
-      if (!user) {
-        return res.json({
-          status: 400,
-          message: "Wrong credentials",
-        });
-      }
-  
-      const isMatched = await checkPassword({ password, hash: user.password });
-      if (!isMatched) {
-        return res.json({
-          status: 400,
-          message: "Wrong credentials",
-        });
-      }
-  
-      // return user object response without showing password
-      const { ...userData } = user
-      delete userData.password
+const userLogin = async (req, res, next) => {
+  try {
+    
+    // await authMiddleware(req, res, next, [authChecker.isAuthenticated, authChecker.isAdminUser])
+    const { email, password } = req.body;
+
+    let user = await getCollection("users").findOne({
+      email: email,
+    });
+    if (!user) {
       return res.json({
-        status: 200,
-        message: "Login success",
-        data: userData,
+        status: 400,
+        message: "Wrong credentials",
       });
-    } catch (err) {
-      console.log("Try-catch-error in user-login", err);
     }
-  };
+    if (!user.active) {
+      return res.json({
+        status: 400,
+        message: "User has been disabled"
+      })
+    }
 
+    const isMatched = await checkPassword({ password, hash: user.password });
+    if (!isMatched) {
+      return res.json({
+        status: 400,
+        message: "Wrong credentials",
+      });
+    }
+  
+    // return user object response without showing password
+    const { ...userData } = user;
+    delete userData.password;
+    // generate token
+    const token =  getJwtToken({user:{userData}});
+    userData.token = token;
+    return res.json({
+      status: 200,
+      message: "Login success",
+      data: userData,
+    });
+  } catch (err) {
+    console.log("Try-catch-error in user-login", err);
+  }
+};
 
-
-export {
-    userCreator,
-    userLogin,
-}
+export { userCreator, userLogin };
