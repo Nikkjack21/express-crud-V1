@@ -23,6 +23,7 @@ const authMiddleware = (args) => {
       const user = await getCollection("users").findOne({
         email: body["email"],
       });
+      // console.log("user----->", !user.is_admin);
       let checkToken = token ? token : "";
       if (checkToken && checkToken.startsWith("Bearer ")) {
         checkToken = checkToken.slice(7);
@@ -48,25 +49,33 @@ const authMiddleware = (args) => {
         }
       }
       if (isAdmin) {
-        const isValidUser = isValidToken.is_admin;
-        if (!isValidUser) {
-          return res.json({
-            status: 401,
-            message: "You are not authorized.",
-          });
-        } else if (!user.is_admin) {
-          return res.json({
-            status: 401,
-            message: "You are not authorized.",
-          });
+        try {
+          if (user.is_admin) {
+            console.log("Okkk");
+            return next();
+          } else {
+            console.log("IN ELSE BLICK");
+            return res.json({
+              status: 401,
+              message: "You are not authorized...",
+            });
+          }
+        } catch (error) {
+          const isValidUser = isValidToken.is_admin;
+          if (!isValidUser) {
+            return res.json({
+              status: 401,
+              message: "You are not authorized.",
+            });
+          }
         }
       }
       next();
     } catch (error) {
       console.log("MIDDLEWARE-ERROR", error);
       return res.json({
-        status: 401,
-        message: "Not authorized.",
+        status: 400,
+        message: "Please try again.",
       });
     }
   };
@@ -76,7 +85,7 @@ const getJwtToken = (data) => {
   try {
     const { user } = data;
     const token = jwt.sign(user, JWT_TOKEN_SECRET_KEY, {
-      expiresIn: 60,
+      expiresIn: "1h",
     });
     return token;
   } catch (err) {

@@ -6,8 +6,8 @@ import { authMiddleware, authChecker } from "../middlewares/middleware.auth.js";
 const router = express.Router();
 
 // Authentication & Authorization checkers
-const isAdmin = authChecker.isAdminUser;
 const isAuth = authChecker.isAuthenticated;
+const isAdmin = authChecker.isAdminUser;
 
 router.post("/create-admin-user", adminCtrl.adminUserCreator);
 router.post("/login-admin", authMiddleware({isAdmin}), adminCtrl.adminUserLogin);
