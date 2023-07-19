@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 
+import { validationResult } from "express-validator";
 import { getCollection } from "../db-handlers/db-handler.connection.js";
 
 const { JWT_TOKEN_SECRET_KEY } = process.env;
@@ -14,23 +15,29 @@ const adminRoute = ["/api/admin/login-admin"];
 const authMiddleware = (args) => {
   return async (req, res, next) => {
     try {
-      const { headers, body } = req;
-      const { isAuth, isAdmin } = args;
-      console.log(args);
-      const token = headers["authorization"];
-      let isValidToken = "";
+      // check for validation errors from here,
+      // if authMiddleware has been given in route
+      const errors = validationResult(req);
+      console.log(errors);
+      if (errors && errors.array().length > 0) {
+        console.log("user-validation-errors-middleware", errors);
+        return res.json({ status: 400, message: errors.array()[0].msg });
+      }
 
+      let isValidToken = "";
+      const { isAuth, isAdmin } = args;
+      const { headers, body } = req;
       const user = await getCollection("users").findOne({
         email: body["email"],
       });
-      // console.log("user----->", !user.is_admin);
+      
+      const token = headers["authorization"];
       let checkToken = token ? token : "";
       if (checkToken && checkToken.startsWith("Bearer ")) {
         checkToken = checkToken.slice(7);
       }
 
       if (isAuth) {
-        console.log("checker", isAuth);
         if (!headers["authorization"]) {
           return res.json({
             status: 400,
@@ -51,10 +58,8 @@ const authMiddleware = (args) => {
       if (isAdmin) {
         try {
           if (user.is_admin) {
-            console.log("Okkk");
             return next();
           } else {
-            console.log("IN ELSE BLICK");
             return res.json({
               status: 401,
               message: "You are not authorized...",

@@ -1,3 +1,6 @@
+
+
+import { validationResult } from "express-validator";
 import { getCollection } from "../db-handlers/db-handler.connection.js";
 import { passwordHash, checkPassword } from "../common/password.js";
 import { getJwtToken } from "../middlewares/middleware.auth.js";
@@ -52,6 +55,14 @@ const adminUserCreator = async (req, res) => {
 
 const adminUserLogin = async (req, res) => {
   try {
+    // check validation errors
+    // const errors = validationResult(req);
+    // console.log(errors)
+    // if (errors && errors.array().length > 0) {
+    //   console.log("user-validation-errors", errors);
+    //   return res.json({ status: 400, message: errors.array()[0].msg });
+    // }
+
     const { email, password } = req.body;
 
     let user = await getCollection("users").findOne({
