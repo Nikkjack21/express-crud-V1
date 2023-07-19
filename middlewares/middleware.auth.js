@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-
+import "dotenv/config.js"
 import { validationResult } from "express-validator";
 import { getCollection } from "../db-handlers/db-handler.connection.js";
 
@@ -30,7 +30,7 @@ const authMiddleware = (args) => {
       const user = await getCollection("users").findOne({
         email: body["email"],
       });
-      
+
       const token = headers["authorization"];
       let checkToken = token ? token : "";
       if (checkToken && checkToken.startsWith("Bearer ")) {
